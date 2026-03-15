@@ -1,0 +1,37 @@
+services:
+  - type: web
+    name: signaturehub
+    runtime: node
+    region: oregon
+    plan: free
+    rootDir: .
+    buildCommand: npm run render:build
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: MONGODB_URI
+        sync: false   # Set manually in Render dashboard
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: CLIENT_URL
+        sync: false   # Set to your Render service URL once deployed
+      - key: REDIS_URL
+        sync: false   # Optional — leave blank to run without cache
+      # Microsoft Azure AD (set manually)
+      - key: AZURE_CLIENT_ID
+        sync: false
+      - key: AZURE_CLIENT_SECRET
+        sync: false
+      - key: AZURE_TENANT_ID
+        sync: false
+      # Optional
+      - key: AZURE_STORAGE_CONNECTION_STRING
+        sync: false
+      - key: API_KEY_SECRET
+        generateValue: true

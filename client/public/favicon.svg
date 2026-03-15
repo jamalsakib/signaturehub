@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- Background rounded square -->
+  <rect width="64" height="64" rx="12" fill="#1a56db"/>
+
+  <!-- Envelope body -->
+  <rect x="10" y="18" width="44" height="30" rx="3" fill="white" opacity="0.15"/>
+  <rect x="10" y="18" width="44" height="30" rx="3" stroke="white" stroke-width="2.5" fill="none"/>
+
+  <!-- Envelope flap (V shape) -->
+  <path d="M10 21 L32 36 L54 21" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Signature line (stylized pen stroke) -->
+  <path d="M18 40 Q22 36 26 40 Q30 44 34 38 Q38 32 44 36" stroke="#93c5fd" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Small dot at end of signature -->
+  <circle cx="44" cy="36" r="1.5" fill="#93c5fd"/>
+</svg>

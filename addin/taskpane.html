@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SignatureHub</title>
+  <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js" type="text/javascript"></script>
+  <script src="src/taskpane.js" defer></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      font-size: 13px;
+      background: #f9fafb;
+      color: #111;
+      min-height: 100vh;
+    }
+    header {
+      background: #0078d4;
+      color: white;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    header .logo {
+      font-weight: 700;
+      font-size: 15px;
+    }
+    header .subtitle {
+      font-size: 11px;
+      opacity: 0.8;
+    }
+    #loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 160px;
+      gap: 10px;
+      color: #666;
+    }
+    .spinner {
+      width: 28px; height: 28px;
+      border: 3px solid #e5e7eb;
+      border-top-color: #0078d4;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #content {
+      display: none;
+      flex-direction: column;
+      gap: 0;
+    }
+    .user-bar {
+      background: #eff6ff;
+      padding: 8px 16px;
+      border-bottom: 1px solid #dbeafe;
+      font-size: 12px;
+      color: #1d4ed8;
+    }
+    .preview-wrapper {
+      background: white;
+      border-bottom: 1px solid #e5e7eb;
+      padding: 12px;
+    }
+    .preview-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: #9ca3af;
+      letter-spacing: 0.05em;
+      margin-bottom: 8px;
+    }
+    #signature-preview {
+      width: 100%;
+      min-height: 180px;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      background: white;
+    }
+    .actions {
+      padding: 12px 16px;
+      display: flex;
+      gap: 8px;
+      background: #f9fafb;
+    }
+    .btn {
+      flex: 1;
+      padding: 9px 12px;
+      border-radius: 6px;
+      border: none;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-primary {
+      background: #0078d4;
+      color: white;
+    }
+    .btn-primary:hover { background: #106ebe; }
+    .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-secondary {
+      background: white;
+      color: #374151;
+      border: 1px solid #d1d5db;
+    }
+    .btn-secondary:hover { background: #f3f4f6; }
+    #error {
+      display: none;
+      margin: 8px 16px;
+      padding: 8px 12px;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 6px;
+      color: #dc2626;
+      font-size: 12px;
+    }
+    footer {
+      padding: 8px 16px;
+      font-size: 11px;
+      color: #9ca3af;
+      text-align: center;
+    }
+    footer a { color: #0078d4; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <div class="logo">✉ SignatureHub</div>
+      <div class="subtitle">Corporate Email Signatures</div>
+    </div>
+  </header>
+
+  <div id="loading">
+    <div class="spinner"></div>
+    <span>Loading your signature...</span>
+  </div>
+
+  <div id="error"></div>
+
+  <div id="content">
+    <div class="user-bar">
+      Signed in as: <strong id="user-email"></strong>
+    </div>
+    <div class="preview-wrapper">
+      <div class="preview-label">Your Signature Preview</div>
+      <iframe id="signature-preview" title="Signature Preview" frameborder="0" scrolling="no"></iframe>
+    </div>
+    <div class="actions">
+      <button id="insert-btn" class="btn btn-primary">Insert Signature</button>
+      <button id="reload-btn" class="btn btn-secondary">↻ Reload</button>
+    </div>
+  </div>
+
+  <footer>
+    Powered by <a href="https://your-signaturehub-domain.com" target="_blank">SignatureHub</a>
+  </footer>
+</body>
+</html>
