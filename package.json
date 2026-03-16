@@ -9,7 +9,7 @@
     "dev:server": "npm run dev --prefix server",
     "dev:client": "npm run dev --prefix client",
     "build": "npm install --prefix client && npm run build --prefix client",
-    "start": "node server/src/index.js",
+    "start": "cd server && node src/index.js",
     "render:build": "npm install --prefix server && npm install --prefix client && npm run build --prefix client",
     "docker:up": "docker-compose -f docker/docker-compose.yml up -d",
     "docker:down": "docker-compose -f docker/docker-compose.yml down",
