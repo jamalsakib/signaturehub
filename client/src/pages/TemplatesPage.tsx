@@ -154,22 +154,38 @@ function TagList({ label, sublabel, items, onAdd, onRemove }: {
   );
 }
 
-// ── Preview thumbnail ─────────────────────────────────────────────────────────
+// ── Preview thumbnail — lazy loads only when scrolled into view ───────────────
 
 function PreviewThumbnailInline({ id, compact }: { id: string; compact: boolean }) {
   const [html, setHtml] = useState<string | null>(null);
+  const [visible, setVisible] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  // Observe visibility — only fetch when the thumbnail enters the viewport
   useEffect(() => {
+    if (!ref.current) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setVisible(true); observer.disconnect(); } },
+      { rootMargin: '100px' }
+    );
+    observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!visible) return;
     templatesApi.preview(id).then(({ data }) => setHtml(data.html)).catch(() => setHtml(''));
-  }, [id]);
-  if (html === null) return (
-    <div className="absolute inset-0 flex flex-col gap-1 p-2 animate-pulse">
+  }, [visible, id]);
+
+  if (!visible || html === null) return (
+    <div ref={ref} className="absolute inset-0 flex flex-col gap-1 p-2 animate-pulse">
       <div className="h-2 bg-gray-200 rounded w-3/4" /><div className="h-1.5 bg-gray-100 rounded w-1/2" />
     </div>
   );
-  if (!html) return <div className="absolute inset-0 flex items-center justify-center bg-gray-50"><Eye className="w-4 h-4 text-gray-300" /></div>;
+  if (!html) return <div ref={ref} className="absolute inset-0 flex items-center justify-center bg-gray-50"><Eye className="w-4 h-4 text-gray-300" /></div>;
   const scale = compact ? 0.13 : 0.213;
   return (
-    <div style={{ width: '600px', height: '360px', transform: `scale(${scale})`, transformOrigin: '0 0', position: 'absolute', pointerEvents: 'none' }}>
+    <div ref={ref} style={{ width: '600px', height: '360px', transform: `scale(${scale})`, transformOrigin: '0 0', position: 'absolute', pointerEvents: 'none' }}>
       <div dangerouslySetInnerHTML={{ __html: html }} />
     </div>
   );

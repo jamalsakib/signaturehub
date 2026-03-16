@@ -44,22 +44,22 @@ app.use(cors({
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 200,
+  max: 1000,                 // raised from 200 — previews fire per template on load
   standardHeaders: true,
   legacyHeaders: false,
+  skip: () => process.env.NODE_ENV === 'development',
   message: { error: 'Too many requests, please try again later.' },
 });
 
 const strictLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 20,
+  skip: () => process.env.NODE_ENV === 'development',
   message: { error: 'Too many auth requests.' },
 });
 
 app.use('/api/', limiter);
-if (process.env.NODE_ENV !== 'development') {
-  app.use('/api/auth/', strictLimiter);
-}
+app.use('/api/auth/', strictLimiter);
 
 app.use(compression());
 app.use(express.json({ limit: '10mb' }));
