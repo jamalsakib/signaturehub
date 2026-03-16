@@ -5,8 +5,8 @@ services:
     region: oregon
     plan: starter          # Free tier sleeps after 15min inactivity — use starter ($7/mo) for production
     rootDir: .
-    buildCommand: npm run render:build
-    startCommand: npm start
+    buildCommand: "(cd server && npm install) && (cd client && npm install && npm run build)"
+    startCommand: "cd server && node src/index.js"
     healthCheckPath: /health
     envVars:
       - key: NODE_ENV
