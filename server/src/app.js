@@ -66,9 +66,21 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(morgan('combined', { stream: { write: (msg) => logger.info(msg.trim()) } }));
 
-// Health check
+// Health check — includes DB and Redis state
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString(), version: '1.0.0' });
+  const mongoose = require('mongoose');
+  const { getRedisClient } = require('./config/redis');
+  const dbState = ['disconnected', 'connected', 'connecting', 'disconnecting'];
+  const db = dbState[mongoose.connection.readyState] || 'unknown';
+  const redis = getRedisClient() ? 'connected' : 'unavailable';
+  const healthy = db === 'connected';
+  res.status(healthy ? 200 : 503).json({
+    status: healthy ? 'ok' : 'degraded',
+    db,
+    redis,
+    timestamp: new Date().toISOString(),
+    version: '1.0.0',
+  });
 });
 
 // Public routes
@@ -86,7 +98,7 @@ app.use('/api/rules', authenticate, ruleRoutes);
 app.use('/api/assets', authenticate, assetRoutes);
 app.use('/api/analytics', authenticate, analyticsRoutes);
 app.use('/api/sync', authenticate, syncRoutes);
-app.use('/api/admin', adminRoutes);
+app.use('/api/admin', authenticate, adminRoutes);
 
 // Serve React frontend in production
 if (process.env.NODE_ENV === 'production') {

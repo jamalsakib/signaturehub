@@ -1,4 +1,13 @@
 require('dotenv').config();
+
+// ── Environment validation ─────────────────────────────────────────────────
+const REQUIRED_ENV = ['MONGODB_URI', 'JWT_SECRET', 'JWT_REFRESH_SECRET'];
+const missing = REQUIRED_ENV.filter((k) => !process.env[k]);
+if (missing.length) {
+  console.error(`[startup] Missing required environment variables: ${missing.join(', ')}`);
+  process.exit(1);
+}
+
 const app = require('./app');
 const { connectDB } = require('./config/database');
 const { connectRedis } = require('./config/redis');

@@ -3,7 +3,7 @@ services:
     name: signaturehub
     runtime: node
     region: oregon
-    plan: free
+    plan: starter          # Free tier sleeps after 15min inactivity — use starter ($7/mo) for production
     rootDir: .
     buildCommand: npm run render:build
     startCommand: npm start
@@ -14,24 +14,24 @@ services:
       - key: PORT
         value: 10000
       - key: MONGODB_URI
-        sync: false   # Set manually in Render dashboard
+        sync: false         # REQUIRED — set to your MongoDB Atlas connection string
       - key: JWT_SECRET
-        generateValue: true
+        generateValue: true # Render auto-generates a secure random value
       - key: JWT_REFRESH_SECRET
         generateValue: true
       - key: CLIENT_URL
-        sync: false   # Set to your Render service URL once deployed
+        sync: false         # REQUIRED — set to your Render URL e.g. https://signaturehub.onrender.com
       - key: REDIS_URL
-        sync: false   # Optional — leave blank to run without cache
-      # Microsoft Azure AD (set manually)
+        sync: false         # Optional — leave blank to run without cache
+      # Microsoft Azure AD — required for SSO login
       - key: AZURE_CLIENT_ID
         sync: false
       - key: AZURE_CLIENT_SECRET
         sync: false
       - key: AZURE_TENANT_ID
         sync: false
-      # Optional
-      - key: AZURE_STORAGE_CONNECTION_STRING
-        sync: false
-      - key: API_KEY_SECRET
+      - key: AZURE_REDIRECT_URI
+        sync: false         # Set to https://your-render-url.onrender.com/api/auth/callback
+      # Optional — Outlook add-in API key
+      - key: API_KEY
         generateValue: true
