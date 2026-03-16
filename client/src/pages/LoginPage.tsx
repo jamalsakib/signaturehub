@@ -41,10 +41,14 @@ const SAMPLE_CARDS = [
   { name: 'Priya Patel', title: 'Senior Legal Counsel', company: 'Global Partners LLP · London, UK', email: 'p.patel@globalpartners.co.uk', phone: '+44 20 7946 0958', color: '#7c3aed' },
 ];
 
+const DEFAULT_EMAIL = 'admin@signaturehub.local';
+const DEFAULT_PASSWORD = 'Admin@SignHub2026';
+
 export function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState(DEFAULT_EMAIL);
+  const [password, setPassword] = useState(DEFAULT_PASSWORD);
   const [loading, setLoading] = useState(false);
+  const [msLoading, setMsLoading] = useState(false);
   const [error, setError] = useState('');
   const { setTokens, setUser } = useAuthStore();
   const navigate = useNavigate();
@@ -61,6 +65,18 @@ export function LoginPage() {
     } catch {
       setError('Invalid email or password.');
       setLoading(false);
+    }
+  };
+
+  const handleMicrosoftLogin = async () => {
+    setMsLoading(true);
+    setError('');
+    try {
+      const { data } = await authApi.getLoginUrl();
+      window.location.href = data.loginUrl;
+    } catch {
+      setError('Microsoft login unavailable. Use email/password below.');
+      setMsLoading(false);
     }
   };
 
@@ -207,8 +223,7 @@ export function LoginPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@company.com"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
               />
             </div>
 
@@ -221,8 +236,7 @@ export function LoginPage() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
               />
             </div>
 
@@ -242,11 +256,39 @@ export function LoginPage() {
             </button>
           </form>
 
+          {/* Divider */}
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-100" />
+            </div>
+            <div className="relative flex justify-center">
+              <span className="bg-white px-3 text-xs text-gray-400">or</span>
+            </div>
+          </div>
+
+          {/* Microsoft SSO */}
+          <button
+            onClick={handleMicrosoftLogin}
+            disabled={msLoading}
+            className="w-full flex items-center justify-center gap-3 border border-gray-200 hover:bg-gray-50 disabled:opacity-60 text-gray-700 font-medium py-3 px-6 rounded-xl transition-colors text-sm"
+          >
+            {msLoading ? (
+              <div className="w-5 h-5 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <>
+                <svg className="w-5 h-5 shrink-0" viewBox="0 0 23 23" fill="none">
+                  <path d="M1 1h9.5v9.5H1z" fill="#f35325" />
+                  <path d="M12.5 1H22v9.5h-9.5z" fill="#81bc06" />
+                  <path d="M1 11.5h9.5V21H1z" fill="#05a6f0" />
+                  <path d="M12.5 11.5H22V21h-9.5z" fill="#ffba08" />
+                </svg>
+                Sign in with Microsoft 365
+              </>
+            )}
+          </button>
+
           {/* Footer */}
-          <div className="mt-10 space-y-1 text-center">
-            <p className="text-xs text-gray-400">
-              Secured by <span className="font-medium text-gray-500">SignatureHub</span>
-            </p>
+          <div className="mt-8 space-y-1 text-center">
             <p className="text-xs text-gray-300">© 2026 SignatureHub · All rights reserved</p>
           </div>
         </div>
