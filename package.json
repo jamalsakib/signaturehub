@@ -3,13 +3,17 @@
   "version": "1.0.0",
   "description": "Enterprise Email Signature Management Platform for Microsoft 365",
   "private": true,
+  "workspaces": [
+    "server",
+    "client"
+  ],
   "scripts": {
     "install:all": "npm install --prefix server && npm install --prefix client",
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
     "dev:server": "npm run dev --prefix server",
     "dev:client": "npm run dev --prefix client",
     "build": "npm install --prefix client && npm run build --prefix client",
-    "start": "cd server && node src/index.js",
+    "start": "node server/src/index.js",
     "render:build": "npm install --prefix server && npm install --prefix client && npm run build --prefix client",
     "docker:up": "docker-compose -f docker/docker-compose.yml up -d",
     "docker:down": "docker-compose -f docker/docker-compose.yml down",

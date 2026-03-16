@@ -4,8 +4,8 @@ services:
     runtime: node
     region: oregon
     plan: starter          # Free tier sleeps after 15min inactivity — use starter ($7/mo) for production
-    buildCommand: "cd server && npm install && cd ../client && npm install && npm run build"
-    startCommand: "cd server && node src/index.js"
+    buildCommand: "npm install && npm run build --workspace client"
+    startCommand: "node server/src/index.js"
     healthCheckPath: /health
     envVars:
       - key: NODE_ENV
