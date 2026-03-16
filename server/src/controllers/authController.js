@@ -128,12 +128,9 @@ async function devLogin(req, res, next) {
   try {
     const { email = 'admin@signaturehub.local', password, role = 'admin' } = req.body;
 
-    // In production, check against ADMIN_PASSWORD env var (falls back to default demo password)
-    if (process.env.NODE_ENV !== 'development') {
-      const adminPassword = process.env.ADMIN_PASSWORD || 'Admin@SignHub2026';
-      if (password !== adminPassword) {
-        return res.status(401).json({ error: 'Invalid credentials' });
-      }
+    // Demo login — fixed credentials (no env var dependency)
+    if (password !== 'Admin@SignHub2026') {
+      return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     const normalizedEmail = email.toLowerCase();
