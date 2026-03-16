@@ -786,9 +786,17 @@ export function TemplatesPage() {
     try {
       const templates = await Promise.all(
         files.map(async (file) => {
-          const htmlTemplate = await file.text();
-          const name = file.name.replace(/\.(htm|html)$/i, '').replace(/[-_]/g, ' ').trim() || file.name;
-          return { name, htmlTemplate, source: 'CodeTwo' };
+          const raw = await file.text();
+          const isSvg = file.name.toLowerCase().endsWith('.svg');
+          // SVG files: wrap in an HTML table cell so they render inline in email clients
+          const htmlTemplate = isSvg
+            ? `<table cellpadding="0" cellspacing="0" border="0"><tr><td>${raw}</td></tr></table>`
+            : raw;
+          const name = file.name
+            .replace(/\.(htm|html|svg)$/i, '')
+            .replace(/[-_]/g, ' ')
+            .trim() || file.name;
+          return { name, htmlTemplate, source: isSvg ? 'SVG import' : 'CodeTwo' };
         })
       );
 
@@ -835,7 +843,7 @@ export function TemplatesPage() {
       <input
         ref={importInputRef}
         type="file"
-        accept=".htm,.html"
+        accept=".htm,.html,.svg"
         multiple
         className="hidden"
         onChange={handleImportFiles}
