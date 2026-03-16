@@ -166,6 +166,7 @@ async function devLogin(req, res, next) {
       user: { id: user._id, email: user.email, role: user.role, displayName: user.displayName },
     });
   } catch (err) {
+    logger.error(`devLogin error: ${err.message}`);
     next(err);
   }
 }

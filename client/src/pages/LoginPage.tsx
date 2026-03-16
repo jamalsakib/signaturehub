@@ -62,8 +62,9 @@ export function LoginPage() {
       setTokens(data.accessToken, data.refreshToken);
       setUser(data.user);
       navigate('/dashboard');
-    } catch {
-      setError('Invalid email or password.');
+    } catch (err: any) {
+      const msg = err?.response?.data?.error || err?.message || 'Login failed. Please try again.';
+      setError(msg);
       setLoading(false);
     }
   };
