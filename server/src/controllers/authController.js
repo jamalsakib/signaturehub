@@ -123,36 +123,43 @@ async function me(req, res) {
   res.json(req.user);
 }
 
-// POST /api/auth/dev-login  — development only bypass (no Azure required)
+// POST /api/auth/dev-login  — local/admin login (no Azure required)
 async function devLogin(req, res, next) {
-  if (process.env.NODE_ENV !== 'development') {
-    return res.status(404).json({ error: 'Not found' });
-  }
   try {
-    const { role = 'admin' } = req.body;
-    const email = `dev-${role}@localhost.dev`;
+    const { email = 'admin@signaturehub.local', password, role = 'admin' } = req.body;
+
+    // In production, require a matching ADMIN_PASSWORD env var
+    if (process.env.NODE_ENV !== 'development') {
+      const adminPassword = process.env.ADMIN_PASSWORD;
+      if (!adminPassword || password !== adminPassword) {
+        return res.status(401).json({ error: 'Invalid credentials' });
+      }
+    }
+
+    const normalizedEmail = email.toLowerCase();
+    const azureId = `local-${normalizedEmail.replace(/[^a-z0-9]/gi, '-')}`;
 
     const user = await User.findOneAndUpdate(
-      { email },
+      { email: normalizedEmail },
       {
         $set: {
-          displayName: `Dev ${role.charAt(0).toUpperCase() + role.slice(1)}`,
-          firstName: 'Dev',
-          lastName: role.charAt(0).toUpperCase() + role.slice(1),
-          jobTitle: 'Developer',
-          department: 'Engineering',
+          displayName: normalizedEmail.split('@')[0],
+          firstName: normalizedEmail.split('@')[0],
+          lastName: '',
+          jobTitle: 'Administrator',
+          department: 'Administration',
           company: 'SignatureHub',
           role,
           isActive: true,
           lastLoginAt: new Date(),
         },
-        $setOnInsert: { azureId: `dev-${role}-azureid`, email },
+        $setOnInsert: { azureId, email: normalizedEmail },
       },
       { upsert: true, new: true, runValidators: false }
     );
 
     const tokens = signTokens(user._id.toString());
-    logger.info(`Dev login: ${email} (${role})`);
+    logger.info(`Local login: ${normalizedEmail}`);
     res.json({
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken,

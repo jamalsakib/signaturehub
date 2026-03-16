@@ -45,6 +45,8 @@ export const authApi = {
   getLoginUrl: () => api.get<{ loginUrl: string }>('/auth/login'),
   getMe: () => api.get('/auth/me'),
   logout: () => api.post('/auth/logout'),
+  localLogin: (email: string, password: string) =>
+    api.post('/auth/dev-login', { email, password }),
 };
 
 // ── Users ───────────────────────────────────────────────────────────────────

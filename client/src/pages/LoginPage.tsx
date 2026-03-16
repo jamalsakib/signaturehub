@@ -3,9 +3,6 @@ import { Mail, Shield, Users, Zap, CheckCircle, BarChart3 } from 'lucide-react';
 import { authApi } from '../services/api';
 import { useAuthStore } from '../store/authStore';
 import { useNavigate } from 'react-router-dom';
-import { api } from '../services/api';
-
-const IS_DEV = import.meta.env.DEV;
 
 // Inline signature card mock-ups shown on the left panel
 function SignatureCard({ name, title, company, color, email, phone }: {
@@ -45,35 +42,25 @@ const SAMPLE_CARDS = [
 ];
 
 export function LoginPage() {
-  const [msLoading, setMsLoading] = useState(false);
-  const [devLoading, setDevLoading] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const { setTokens, setUser } = useAuthStore();
   const navigate = useNavigate();
 
-  const handleMicrosoftLogin = async () => {
-    setMsLoading(true);
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
     setError('');
     try {
-      const { data } = await authApi.getLoginUrl();
-      window.location.href = data.loginUrl;
-    } catch {
-      setError('Failed to initiate login. Please check your Azure configuration.');
-      setMsLoading(false);
-    }
-  };
-
-  const handleDevLogin = async () => {
-    setDevLoading(true);
-    setError('');
-    try {
-      const { data } = await api.post('/auth/dev-login', { role: 'admin' });
+      const { data } = await authApi.localLogin(email, password);
       setTokens(data.accessToken, data.refreshToken);
       setUser(data.user);
       navigate('/dashboard');
     } catch {
-      setError('Dev login failed.');
-      setDevLoading(false);
+      setError('Invalid email or password.');
+      setLoading(false);
     }
   };
 
@@ -209,67 +196,56 @@ export function LoginPage() {
             </div>
           )}
 
-          {/* Microsoft Sign In */}
-          <div className="space-y-3">
-            <button
-              onClick={handleMicrosoftLogin}
-              disabled={msLoading}
-              className="w-full flex items-center justify-center gap-3 bg-[#2f73b5] hover:bg-[#266099] disabled:opacity-60 text-white font-semibold py-3.5 px-6 rounded-xl transition-colors text-sm shadow-sm"
-            >
-              {msLoading ? (
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <>
-                  <svg className="w-5 h-5 shrink-0" viewBox="0 0 23 23" fill="none">
-                    <path d="M1 1h9.5v9.5H1z" fill="#f35325" />
-                    <path d="M12.5 1H22v9.5h-9.5z" fill="#81bc06" />
-                    <path d="M1 11.5h9.5V21H1z" fill="#05a6f0" />
-                    <path d="M12.5 11.5H22V21h-9.5z" fill="#ffba08" />
-                  </svg>
-                  Sign in with Microsoft 365
-                </>
-              )}
-            </button>
-
-            <p className="text-xs text-gray-400 text-center">
-              Use your Microsoft work or school account
-            </p>
-          </div>
-
-          {/* Divider */}
-          {IS_DEV && (
-            <div className="relative my-6">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-200" />
-              </div>
-              <div className="relative flex justify-center">
-                <span className="bg-white px-3 text-xs text-gray-400">Development mode</span>
-              </div>
+          {/* Email / Password form */}
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Email address
+              </label>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@company.com"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              />
             </div>
-          )}
 
-          {/* Dev bypass */}
-          {IS_DEV && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Password
+              </label>
+              <input
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              />
+            </div>
+
             <button
-              onClick={handleDevLogin}
-              disabled={devLoading}
-              className="w-full flex items-center justify-center gap-2 bg-[#1c2d4a] hover:bg-[#16243c] disabled:opacity-60 text-white font-semibold py-3.5 px-6 rounded-xl transition-colors text-sm"
+              type="submit"
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-semibold py-3.5 px-6 rounded-xl transition-colors text-sm shadow-sm"
             >
-              {devLoading ? (
+              {loading ? (
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
               ) : (
                 <>
                   <Shield className="w-4 h-4" />
-                  Continue as Admin (Dev)
+                  Sign in
                 </>
               )}
             </button>
-          )}
+          </form>
 
           {/* Footer */}
           <div className="mt-10 space-y-1 text-center">
             <p className="text-xs text-gray-400">
-              Secured by <span className="font-medium text-gray-500">Azure Active Directory</span>
+              Secured by <span className="font-medium text-gray-500">SignatureHub</span>
             </p>
             <p className="text-xs text-gray-300">© 2026 SignatureHub · All rights reserved</p>
           </div>

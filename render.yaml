@@ -20,6 +20,8 @@ services:
         generateValue: true
       - key: CLIENT_URL
         sync: false         # REQUIRED — set to your Render URL e.g. https://signaturehub.onrender.com
+      - key: ADMIN_PASSWORD
+        sync: false         # REQUIRED — set a strong password for the local login
       - key: REDIS_URL
         sync: false         # Optional — leave blank to run without cache
       # Microsoft Azure AD — required for SSO login
