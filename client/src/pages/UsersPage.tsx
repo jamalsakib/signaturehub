@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { Search, RefreshCw, ChevronRight } from 'lucide-react';
 import { usersApi } from '../services/api';
@@ -23,7 +23,7 @@ export function UsersPage() {
     queryKey: ['users', { search, department, role, page }],
     queryFn: () =>
       usersApi.list({ search, department, role, page, limit: 50 }).then((r) => r.data),
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
   });
 
   const users = data?.data || [];
