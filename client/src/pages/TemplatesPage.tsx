@@ -758,6 +758,8 @@ export function TemplatesPage() {
   const [openSections, setOpenSections] = useState<Record<SectionKey, boolean>>({ cloud: true, outlook: true, autoresponders: true });
   const [search, setSearch] = useState('');
   const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [importStatus, setImportStatus] = useState<{ state: 'idle' | 'importing' | 'done' | 'error'; message: string }>({ state: 'idle', message: '' });
+  const importInputRef = useRef<HTMLInputElement>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ['templates'],
@@ -773,6 +775,36 @@ export function TemplatesPage() {
     mutationFn: (id: string) => templatesApi.delete(id),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['templates'] }); setSelected(new Set()); },
   });
+
+  const handleImportFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    e.target.value = ''; // reset so same file can be re-imported
+    setShowMoreMenu(false);
+    setImportStatus({ state: 'importing', message: `Reading ${files.length} file(s)...` });
+
+    try {
+      const templates = await Promise.all(
+        files.map(async (file) => {
+          const htmlTemplate = await file.text();
+          const name = file.name.replace(/\.(htm|html)$/i, '').replace(/[-_]/g, ' ').trim() || file.name;
+          return { name, htmlTemplate, source: 'CodeTwo' };
+        })
+      );
+
+      const { data } = await templatesApi.import({ templates });
+      await queryClient.invalidateQueries({ queryKey: ['templates'] });
+      setImportStatus({
+        state: 'done',
+        message: data.message,
+      });
+      setTimeout(() => setImportStatus({ state: 'idle', message: '' }), 5000);
+    } catch (err: any) {
+      const msg = err?.response?.data?.error || err?.message || 'Import failed';
+      setImportStatus({ state: 'error', message: msg });
+      setTimeout(() => setImportStatus({ state: 'idle', message: '' }), 6000);
+    }
+  };
 
   const openPreview = async (id: string, name: string) => {
     try {
@@ -798,6 +830,31 @@ export function TemplatesPage() {
 
   return (
     <div className="h-full flex bg-white">
+
+      {/* Hidden file input for importing CodeTwo HTML templates */}
+      <input
+        ref={importInputRef}
+        type="file"
+        accept=".htm,.html"
+        multiple
+        className="hidden"
+        onChange={handleImportFiles}
+      />
+
+      {/* Import status toast */}
+      {importStatus.state !== 'idle' && (
+        <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg text-sm font-medium border
+          ${importStatus.state === 'done' ? 'bg-green-50 border-green-200 text-green-800' :
+            importStatus.state === 'error' ? 'bg-red-50 border-red-200 text-red-800' :
+            'bg-blue-50 border-blue-200 text-blue-800'}`}>
+          {importStatus.state === 'importing' && (
+            <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin shrink-0" />
+          )}
+          {importStatus.state === 'done' && <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />}
+          {importStatus.state === 'error' && <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />}
+          {importStatus.message}
+        </div>
+      )}
 
       {/* ── Left: template list ── */}
       <div className={`${isEditing ? 'w-[420px] shrink-0' : 'flex-1'} flex flex-col border-r border-gray-200 overflow-hidden`}>
@@ -841,7 +898,14 @@ export function TemplatesPage() {
               </button>
               {showMoreMenu && (
                 <div className="absolute left-0 top-10 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-20 py-1" onMouseLeave={() => setShowMoreMenu(false)}>
-                  {['Import templates', 'Export all', 'Reorder signatures'].map((item) => (
+                  <button
+                    onClick={() => importInputRef.current?.click()}
+                    disabled={importStatus.state === 'importing'}
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    {importStatus.state === 'importing' ? 'Importing...' : 'Import templates'}
+                  </button>
+                  {['Export all', 'Reorder signatures'].map((item) => (
                     <button key={item} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">{item}</button>
                   ))}
                 </div>

@@ -75,6 +75,7 @@ export const templatesApi = {
   update: (id: string, data: unknown) => api.put(`/templates/${id}`, data),
   delete: (id: string) => api.delete(`/templates/${id}`),
   clone: (id: string) => api.post(`/templates/${id}/clone`),
+  import: (data: unknown) => api.post('/templates/import', data),
 };
 
 // ── Campaigns ────────────────────────────────────────────────────────────────

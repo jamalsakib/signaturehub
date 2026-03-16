@@ -115,4 +115,53 @@ async function cloneTemplate(req, res, next) {
   }
 }
 
-module.exports = { listTemplates, getTemplate, createTemplate, updateTemplate, deleteTemplate, previewTemplate, cloneTemplate };
+// POST /api/templates/import
+// Body: { templates: [{ name, htmlTemplate, description? }] }
+// Supports .htm/.html files exported from CodeTwo and other systems
+async function importTemplates(req, res, next) {
+  try {
+    const { templates } = req.body;
+    if (!Array.isArray(templates) || templates.length === 0) {
+      return res.status(400).json({ error: 'No templates provided. Send { templates: [...] }' });
+    }
+    if (templates.length > 50) {
+      return res.status(400).json({ error: 'Maximum 50 templates per import batch' });
+    }
+
+    const results = { created: [], failed: [] };
+
+    for (const t of templates) {
+      try {
+        if (!t.htmlTemplate || typeof t.htmlTemplate !== 'string') {
+          results.failed.push({ name: t.name || 'unknown', reason: 'Missing or invalid htmlTemplate' });
+          continue;
+        }
+        const name = (t.name || 'Imported Template').trim().slice(0, 200);
+        const created = await SignatureTemplate.create({
+          name,
+          description: t.description || `Imported from ${t.source || 'CodeTwo'}`,
+          htmlTemplate: t.htmlTemplate,
+          layout: t.layout || 'custom',
+          isActive: true,
+          isDefault: false,
+          createdBy: req.user._id,
+          updatedBy: req.user._id,
+        });
+        results.created.push({ id: created._id, name: created.name });
+      } catch (err) {
+        results.failed.push({ name: t.name || 'unknown', reason: err.message });
+      }
+    }
+
+    const status = results.failed.length > 0 && results.created.length === 0 ? 400 : 207;
+    res.status(status).json({
+      message: `Imported ${results.created.length} template(s), ${results.failed.length} failed.`,
+      created: results.created,
+      failed: results.failed,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { listTemplates, getTemplate, createTemplate, updateTemplate, deleteTemplate, previewTemplate, cloneTemplate, importTemplates };
