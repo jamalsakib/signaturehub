@@ -194,13 +194,20 @@ async function testConnection(req, res, next) {
       return res.status(400).json({ success: false, error: 'Failed to acquire access token from Azure' });
     }
 
-    const { Client } = require('@microsoft/microsoft-graph-client');
-    const graphClient = Client.init({ authProvider: (done) => done(null, tokenResult.accessToken) });
-    const org = await graphClient.api('/organization').select('displayName,verifiedDomains').get();
-    const orgName = org.value?.[0]?.displayName || 'Unknown';
+    // Token acquired — credentials are valid. Try Graph API but don't fail if permissions missing.
+    let orgName = 'Connected';
+    try {
+      const { Client } = require('@microsoft/microsoft-graph-client');
+      const graphClient = Client.init({ authProvider: (done) => done(null, tokenResult.accessToken) });
+      const org = await graphClient.api('/organization').select('displayName').get();
+      orgName = org.value?.[0]?.displayName || 'Connected';
+    } catch {
+      // Graph API call failed (likely missing admin consent) — but credentials are valid
+      orgName = 'Azure AD — credentials verified (grant admin consent for full Graph API access)';
+    }
 
-    logger.info(`Azure AD test connection successful: ${orgName}`);
-    res.json({ success: true, organization: orgName, message: `Connected to ${orgName}` });
+    logger.info(`Azure AD test connection successful`);
+    res.json({ success: true, message: orgName });
   } catch (err) {
     logger.error(`Azure test connection failed: ${err.message}`);
     res.status(400).json({ success: false, error: err.message || 'Connection failed' });
