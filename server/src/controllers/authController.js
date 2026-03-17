@@ -1,9 +1,12 @@
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
-const { getAuthCodeUrl, acquireTokenByCode } = require('../config/msal');
+const { getAuthCodeUrl, acquireTokenByCode, generatePkceCodes } = require('../config/msal');
 const { Client } = require('@microsoft/microsoft-graph-client');
 const User = require('../models/User');
-const { cacheSet, cacheDel } = require('../config/redis');
+const { cacheSet, cacheGet, cacheDel } = require('../config/redis');
+
+// In-memory PKCE store — fallback when Redis is unavailable
+const pkceStore = new Map();
 const logger = require('../utils/logger');
 
 function signTokens(userId) {
@@ -20,8 +23,14 @@ function signTokens(userId) {
 async function login(req, res, next) {
   try {
     const state = uuidv4();
-    await cacheSet(`oauth_state:${state}`, true, 600);
-    const url = await getAuthCodeUrl(state);
+    const { verifier, challenge } = await generatePkceCodes();
+
+    // Store verifier in Redis + in-memory fallback (needed at callback time)
+    await cacheSet(`pkce:${state}`, verifier, 600);
+    pkceStore.set(state, verifier);
+    setTimeout(() => pkceStore.delete(state), 600_000);
+
+    const url = await getAuthCodeUrl(state, challenge);
     res.json({ loginUrl: url });
   } catch (err) {
     next(err);
@@ -31,11 +40,15 @@ async function login(req, res, next) {
 // GET /api/auth/callback
 async function callback(req, res, next) {
   try {
-    const { code, error, error_description } = req.query;
+    const { code, state, error, error_description } = req.query;
     if (error) return res.status(400).json({ error: error_description || error });
     if (!code) return res.status(400).json({ error: 'Missing auth code' });
 
-    const tokenResult = await acquireTokenByCode(code);
+    // Retrieve PKCE verifier — try Redis first, fall back to in-memory
+    const codeVerifier = (await cacheGet(`pkce:${state}`)) || pkceStore.get(state);
+    pkceStore.delete(state);
+
+    const tokenResult = await acquireTokenByCode(code, codeVerifier);
     const { accessToken: msAccessToken } = tokenResult;
 
     const graphClient = Client.init({ authProvider: (done) => done(null, msAccessToken) });
