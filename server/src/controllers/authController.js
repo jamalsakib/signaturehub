@@ -23,7 +23,7 @@ function signTokens(userId) {
 async function login(req, res, next) {
   try {
     const state = uuidv4();
-    const { verifier, challenge } = await generatePkceCodes();
+    const { verifier, challenge } = generatePkceCodes();
 
     // Store verifier in Redis + in-memory fallback (needed at callback time)
     await cacheSet(`pkce:${state}`, verifier, 600);

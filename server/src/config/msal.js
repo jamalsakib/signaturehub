@@ -1,7 +1,7 @@
-const { ConfidentialClientApplication, CryptoProvider } = require('@azure/msal-node');
+const { ConfidentialClientApplication } = require('@azure/msal-node');
+const crypto = require('crypto');
 
 let msalInstance;
-const cryptoProvider = new CryptoProvider();
 
 function getMsalClient() {
   if (!msalInstance) {
@@ -19,9 +19,15 @@ function getMsalClient() {
   return msalInstance;
 }
 
-// Generate PKCE verifier + challenge pair
-async function generatePkceCodes() {
-  return cryptoProvider.generatePkceCodes();
+// PKCE helpers using native Node crypto — reliable cross-platform base64url
+function b64url(buf) {
+  return buf.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+}
+
+function generatePkceCodes() {
+  const verifier = b64url(crypto.randomBytes(32));
+  const challenge = b64url(crypto.createHash('sha256').update(verifier).digest());
+  return { verifier, challenge };
 }
 
 // Auth code URL for user login (delegated flow) — requires PKCE challenge
