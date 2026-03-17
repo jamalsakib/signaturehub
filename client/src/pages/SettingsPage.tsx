@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { CheckCircle2, XCircle, AlertCircle, RefreshCw, Shield, Mail, Users, GitBranch, Bell, Key, Server, Loader2 } from 'lucide-react';
-import { syncApi, authApi } from '../services/api';
+import { syncApi, authApi, settingsApi } from '../services/api';
 
 type Tab = 'azure' | 'mailflow' | 'sync' | 'notifications' | 'api';
 
@@ -56,6 +56,47 @@ export function SettingsPage() {
   const [syncMsg, setSyncMsg] = useState('');
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [saveResult, setSaveResult] = useState<{ success: boolean; message: string } | null>(null);
+
+  // Azure config form state
+  const [azureConfig, setAzureConfig] = useState({
+    tenantId: '',
+    clientId: '',
+    clientSecret: '',
+    redirectUri: `${window.location.origin}/auth/callback`,
+  });
+
+  // Load current Azure config from server on mount
+  useEffect(() => {
+    settingsApi.getAzureConfig().then(({ data }) => {
+      setAzureConfig((prev) => ({
+        ...prev,
+        tenantId: data.tenantId || '',
+        clientId: data.clientId || '',
+        redirectUri: data.redirectUri || prev.redirectUri,
+      }));
+    }).catch(() => {/* ignore — fields stay empty */});
+  }, []);
+
+  const handleSaveAzure = async () => {
+    setSaving(true);
+    setSaveResult(null);
+    try {
+      await settingsApi.saveAzureConfig({
+        tenantId: azureConfig.tenantId,
+        clientId: azureConfig.clientId,
+        clientSecret: azureConfig.clientSecret || undefined,
+        redirectUri: azureConfig.redirectUri,
+      });
+      setSaveResult({ success: true, message: 'Azure configuration saved.' });
+    } catch (err: any) {
+      const msg = err?.response?.data?.error || err?.message || 'Save failed';
+      setSaveResult({ success: false, message: msg });
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const handleTestConnection = async () => {
     setTesting(true);
@@ -101,7 +142,7 @@ export function SettingsPage() {
             <p className="text-xs text-gray-500 mb-1">Azure AD</p>
             <p className="text-sm font-semibold text-gray-900">App Registration</p>
           </div>
-          <StatusBadge status={import.meta.env.VITE_AZURE_CLIENT_ID ? 'connected' : 'disconnected'} />
+          <StatusBadge status={testResult?.success ? 'connected' : azureConfig.clientId ? 'warning' : 'disconnected'} />
         </div>
         <div className="bg-white border border-gray-200 rounded-xl p-4 flex items-center justify-between">
           <div>
@@ -145,11 +186,51 @@ export function SettingsPage() {
           <>
             <Section title="Azure App Registration">
               <div className="grid grid-cols-2 gap-4">
-                <Field label="Tenant ID" value="" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" hint="Your Azure AD tenant ID" />
-                <Field label="Client ID" value="" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" hint="Application (client) ID" />
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Tenant ID</label>
+                  <input
+                    type="text"
+                    value={azureConfig.tenantId}
+                    onChange={(e) => setAzureConfig((p) => ({ ...p, tenantId: e.target.value }))}
+                    placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                  <p className="text-xs text-gray-400 mt-1">Your Azure AD tenant ID</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Client ID</label>
+                  <input
+                    type="text"
+                    value={azureConfig.clientId}
+                    onChange={(e) => setAzureConfig((p) => ({ ...p, clientId: e.target.value }))}
+                    placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                  <p className="text-xs text-gray-400 mt-1">Application (client) ID</p>
+                </div>
               </div>
-              <Field label="Client Secret" value="" type="password" placeholder="••••••••••••••••••••••••" hint="Store securely — never commit to source control" />
-              <Field label="Redirect URI" value={`${window.location.origin}/auth/callback`} hint="Register this exact URI in your Azure App Registration" />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Client Secret</label>
+                <input
+                  type="password"
+                  value={azureConfig.clientSecret}
+                  onChange={(e) => setAzureConfig((p) => ({ ...p, clientSecret: e.target.value }))}
+                  placeholder="Leave blank to keep existing secret"
+                  autoComplete="new-password"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                <p className="text-xs text-gray-400 mt-1">Store securely — never commit to source control</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Redirect URI</label>
+                <input
+                  type="text"
+                  value={azureConfig.redirectUri}
+                  onChange={(e) => setAzureConfig((p) => ({ ...p, redirectUri: e.target.value }))}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                <p className="text-xs text-gray-400 mt-1">Register this exact URI in your Azure App Registration</p>
+              </div>
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-800">
                 <p className="font-semibold mb-1">Required API Permissions</p>
                 <ul className="list-disc list-inside space-y-0.5 text-blue-700 text-xs">
@@ -165,6 +246,12 @@ export function SettingsPage() {
                   {testResult.message}
                 </div>
               )}
+              {saveResult && (
+                <div className={`flex items-center gap-2 p-3 rounded-lg text-sm ${saveResult.success ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+                  {saveResult.success ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <XCircle className="w-4 h-4 shrink-0" />}
+                  {saveResult.message}
+                </div>
+              )}
               <div className="flex justify-end gap-3">
                 <button
                   onClick={handleTestConnection}
@@ -174,7 +261,14 @@ export function SettingsPage() {
                   {testing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Shield className="w-4 h-4" />}
                   {testing ? 'Testing...' : 'Test Connection'}
                 </button>
-                <button className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium">Save Changes</button>
+                <button
+                  onClick={handleSaveAzure}
+                  disabled={saving}
+                  className="flex items-center gap-2 text-sm bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white px-4 py-2 rounded-lg font-medium"
+                >
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                  {saving ? 'Saving...' : 'Save Changes'}
+                </button>
               </div>
             </Section>
 

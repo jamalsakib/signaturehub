@@ -120,6 +120,14 @@ export const analyticsApi = {
   users: () => api.get('/analytics/users'),
 };
 
+// ── Settings ─────────────────────────────────────────────────────────────────
+export const settingsApi = {
+  getAzureConfig: () =>
+    api.get<{ tenantId: string; clientId: string; redirectUri: string }>('/settings/azure-config'),
+  saveAzureConfig: (data: { tenantId?: string; clientId?: string; clientSecret?: string; redirectUri?: string }) =>
+    api.post<{ success: boolean }>('/settings/azure-config', data),
+};
+
 // ── Sync ────────────────────────────────────────────────────────────────────
 export const syncApi = {
   syncAll: () => api.post('/sync/all'),

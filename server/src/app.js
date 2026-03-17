@@ -18,6 +18,7 @@ const signatureRoutes = require('./routes/signatures');
 const analyticsRoutes = require('./routes/analytics');
 const syncRoutes = require('./routes/sync');
 const adminRoutes = require('./routes/admin');
+const settingsRoutes = require('./routes/settings');
 
 const { errorHandler } = require('./middleware/errorHandler');
 const { authenticate } = require('./middleware/authenticate');
@@ -99,6 +100,7 @@ app.use('/api/assets', authenticate, assetRoutes);
 app.use('/api/analytics', authenticate, analyticsRoutes);
 app.use('/api/sync', authenticate, syncRoutes);
 app.use('/api/admin', authenticate, adminRoutes);
+app.use('/api/settings', settingsRoutes);
 
 // Serve React frontend in production
 if (process.env.NODE_ENV === 'production') {

@@ -19,6 +19,11 @@ function getMsalClient() {
   return msalInstance;
 }
 
+// Call after updating env vars so the next request picks up new credentials
+function resetMsalClient() {
+  msalInstance = null;
+}
+
 // PKCE helpers using native Node crypto — reliable cross-platform base64url
 function b64url(buf) {
   return buf.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
@@ -61,4 +66,4 @@ async function acquireTokenClientCredentials() {
   });
 }
 
-module.exports = { getMsalClient, generatePkceCodes, getAuthCodeUrl, acquireTokenByCode, acquireTokenClientCredentials };
+module.exports = { getMsalClient, resetMsalClient, generatePkceCodes, getAuthCodeUrl, acquireTokenByCode, acquireTokenClientCredentials };
