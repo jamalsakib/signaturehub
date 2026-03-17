@@ -1,8 +1,6 @@
 import { useState } from 'react';
 import { Mail, Shield, Users, Zap, CheckCircle, BarChart3 } from 'lucide-react';
 import { authApi } from '../services/api';
-import { useAuthStore } from '../store/authStore';
-import { useNavigate } from 'react-router-dom';
 
 // Inline signature card mock-ups shown on the left panel
 function SignatureCard({ name, title, company, color, email, phone }: {
@@ -41,33 +39,9 @@ const SAMPLE_CARDS = [
   { name: 'Priya Patel', title: 'Senior Legal Counsel', company: 'Global Partners LLP · London, UK', email: 'p.patel@globalpartners.co.uk', phone: '+44 20 7946 0958', color: '#7c3aed' },
 ];
 
-const DEFAULT_EMAIL = 'admin@signaturehub.local';
-const DEFAULT_PASSWORD = 'Admin@SignHub2026';
-
 export function LoginPage() {
-  const [email, setEmail] = useState(DEFAULT_EMAIL);
-  const [password, setPassword] = useState(DEFAULT_PASSWORD);
-  const [loading, setLoading] = useState(false);
   const [msLoading, setMsLoading] = useState(false);
   const [error, setError] = useState('');
-  const { setTokens, setUser } = useAuthStore();
-  const navigate = useNavigate();
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-    try {
-      const { data } = await authApi.localLogin(email, password);
-      setTokens(data.accessToken, data.refreshToken);
-      setUser(data.user);
-      navigate('/dashboard');
-    } catch (err: any) {
-      const msg = err?.response?.data?.error || err?.message || 'Login failed. Please try again.';
-      setError(msg);
-      setLoading(false);
-    }
-  };
 
   const handleMicrosoftLogin = async () => {
     setMsLoading(true);
@@ -76,7 +50,7 @@ export function LoginPage() {
       const { data } = await authApi.getLoginUrl();
       window.location.href = data.loginUrl;
     } catch {
-      setError('Microsoft login unavailable. Use email/password below.');
+      setError('Microsoft login unavailable. Please try again.');
       setMsLoading(false);
     }
   };
@@ -212,61 +186,6 @@ export function LoginPage() {
               {error}
             </div>
           )}
-
-          {/* Email / Password form */}
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                Email address
-              </label>
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                Password
-              </label>
-              <input
-                type="password"
-                required
-                autoComplete="new-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-semibold py-3.5 px-6 rounded-xl transition-colors text-sm shadow-sm"
-            >
-              {loading ? (
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <>
-                  <Shield className="w-4 h-4" />
-                  Sign in
-                </>
-              )}
-            </button>
-          </form>
-
-          {/* Divider */}
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-100" />
-            </div>
-            <div className="relative flex justify-center">
-              <span className="bg-white px-3 text-xs text-gray-400">or</span>
-            </div>
-          </div>
 
           {/* Microsoft SSO */}
           <button

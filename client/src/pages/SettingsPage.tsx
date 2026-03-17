@@ -142,14 +142,14 @@ export function SettingsPage() {
             <p className="text-xs text-gray-500 mb-1">Azure AD</p>
             <p className="text-sm font-semibold text-gray-900">App Registration</p>
           </div>
-          <StatusBadge status={testResult?.success ? 'connected' : azureConfig.clientId ? 'warning' : 'disconnected'} />
+          <StatusBadge status={testResult ? (testResult.success ? 'connected' : 'disconnected') : azureConfig.clientId ? 'connected' : 'disconnected'} />
         </div>
         <div className="bg-white border border-gray-200 rounded-xl p-4 flex items-center justify-between">
           <div>
             <p className="text-xs text-gray-500 mb-1">Microsoft Graph</p>
             <p className="text-sm font-semibold text-gray-900">API Access</p>
           </div>
-          <StatusBadge status="warning" />
+          <StatusBadge status={testResult?.success ? 'connected' : azureConfig.clientId ? 'warning' : 'disconnected'} />
         </div>
         <div className="bg-white border border-gray-200 rounded-xl p-4 flex items-center justify-between">
           <div>

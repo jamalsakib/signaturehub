@@ -78,7 +78,7 @@ async function callback(req, res, next) {
 
     const user = await User.findOneAndUpdate(
       { azureId: graphUser.id },
-      { $set: update, $setOnInsert: { azureId: graphUser.id, email } },
+      { $set: update, $setOnInsert: { azureId: graphUser.id, email, role: 'admin' } },
       { upsert: true, new: true, runValidators: true }
     );
 
