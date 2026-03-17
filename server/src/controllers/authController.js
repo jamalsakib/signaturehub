@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
-const { getAuthCodeUrl, acquireTokenByCode, generatePkceCodes } = require('../config/msal');
+const { getAuthCodeUrl, acquireTokenByCode, generatePkceCodes, acquireTokenClientCredentials } = require('../config/msal');
 const { Client } = require('@microsoft/microsoft-graph-client');
 const User = require('../models/User');
 const { cacheSet, cacheGet, cacheDel } = require('../config/redis');
