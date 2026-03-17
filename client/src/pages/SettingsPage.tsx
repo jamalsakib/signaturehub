@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { CheckCircle2, XCircle, AlertCircle, RefreshCw, Shield, Mail, Users, GitBranch, Bell, Key, Server } from 'lucide-react';
-import { syncApi } from '../services/api';
+import { CheckCircle2, XCircle, AlertCircle, RefreshCw, Shield, Mail, Users, GitBranch, Bell, Key, Server, Loader2 } from 'lucide-react';
+import { syncApi, authApi } from '../services/api';
 
 type Tab = 'azure' | 'mailflow' | 'sync' | 'notifications' | 'api';
 
@@ -54,6 +54,22 @@ export function SettingsPage() {
   const [activeTab, setActiveTab] = useState<Tab>('azure');
   const [syncing, setSyncing] = useState(false);
   const [syncMsg, setSyncMsg] = useState('');
+  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
+
+  const handleTestConnection = async () => {
+    setTesting(true);
+    setTestResult(null);
+    try {
+      const { data } = await authApi.testConnection();
+      setTestResult({ success: data.success, message: data.message || 'Connected successfully' });
+    } catch (err: any) {
+      const msg = err?.response?.data?.error || err?.message || 'Connection failed';
+      setTestResult({ success: false, message: msg });
+    } finally {
+      setTesting(false);
+    }
+  };
 
   const handleSync = async () => {
     setSyncing(true);
@@ -143,8 +159,21 @@ export function SettingsPage() {
                   <li>Exchange.ManageAsApp — Exchange Online management</li>
                 </ul>
               </div>
+              {testResult && (
+                <div className={`flex items-center gap-2 p-3 rounded-lg text-sm ${testResult.success ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+                  {testResult.success ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <XCircle className="w-4 h-4 shrink-0" />}
+                  {testResult.message}
+                </div>
+              )}
               <div className="flex justify-end gap-3">
-                <button className="text-sm border border-gray-300 hover:bg-gray-50 px-4 py-2 rounded-lg">Test Connection</button>
+                <button
+                  onClick={handleTestConnection}
+                  disabled={testing}
+                  className="flex items-center gap-2 text-sm border border-gray-300 hover:bg-gray-50 disabled:opacity-60 px-4 py-2 rounded-lg"
+                >
+                  {testing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Shield className="w-4 h-4" />}
+                  {testing ? 'Testing...' : 'Test Connection'}
+                </button>
                 <button className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium">Save Changes</button>
               </div>
             </Section>

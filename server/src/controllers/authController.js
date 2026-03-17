@@ -168,4 +168,30 @@ async function devLogin(req, res, next) {
   }
 }
 
-module.exports = { login, callback, refresh, logout, me, devLogin };
+// GET /api/auth/test-connection — verify Azure AD credentials work
+async function testConnection(req, res, next) {
+  try {
+    const missing = ['AZURE_CLIENT_ID', 'AZURE_CLIENT_SECRET', 'AZURE_TENANT_ID'].filter(k => !process.env[k]);
+    if (missing.length) {
+      return res.status(400).json({ success: false, error: `Missing env vars: ${missing.join(', ')}` });
+    }
+
+    const tokenResult = await acquireTokenClientCredentials();
+    if (!tokenResult?.accessToken) {
+      return res.status(400).json({ success: false, error: 'Failed to acquire access token from Azure' });
+    }
+
+    const { Client } = require('@microsoft/microsoft-graph-client');
+    const graphClient = Client.init({ authProvider: (done) => done(null, tokenResult.accessToken) });
+    const org = await graphClient.api('/organization').select('displayName,verifiedDomains').get();
+    const orgName = org.value?.[0]?.displayName || 'Unknown';
+
+    logger.info(`Azure AD test connection successful: ${orgName}`);
+    res.json({ success: true, organization: orgName, message: `Connected to ${orgName}` });
+  } catch (err) {
+    logger.error(`Azure test connection failed: ${err.message}`);
+    res.status(400).json({ success: false, error: err.message || 'Connection failed' });
+  }
+}
+
+module.exports = { login, callback, refresh, logout, me, devLogin, testConnection };

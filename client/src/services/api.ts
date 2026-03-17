@@ -47,6 +47,8 @@ export const authApi = {
   logout: () => api.post('/auth/logout'),
   localLogin: (email: string, password: string) =>
     api.post('/auth/dev-login', { email, password }),
+  testConnection: () =>
+    api.get<{ success: boolean; organization?: string; message?: string; error?: string }>('/auth/test-connection'),
 };
 
 // ── Users ───────────────────────────────────────────────────────────────────

@@ -25,14 +25,14 @@ services:
       - key: REDIS_URL
         sync: false         # Optional — leave blank to run without cache
       # Microsoft Azure AD — required for SSO login
-      - key: AZURE_CLIENT_ID
-        sync: false
-      - key: AZURE_CLIENT_SECRET
-        sync: false
       - key: AZURE_TENANT_ID
-        sync: false
+        value: bb3bcb8b-6acb-4a83-bfb6-d484f67ba0b2
+      - key: AZURE_CLIENT_ID
+        value: 5e0a49a2-7937-4b3d-b365-42efda4ab0b9
+      - key: AZURE_CLIENT_SECRET
+        sync: false         # REQUIRED — paste your Azure client secret VALUE (not the ID)
       - key: AZURE_REDIRECT_URI
-        sync: false         # Set to https://your-render-url.onrender.com/api/auth/callback
+        sync: false         # REQUIRED — set to https://your-render-url.onrender.com/api/auth/callback
       # Optional — Outlook add-in API key
       - key: API_KEY
         generateValue: true
